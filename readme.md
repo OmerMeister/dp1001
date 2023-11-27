@@ -1,7 +1,7 @@
 
 # DP1001 - Jenkins, ECR, EKS
 ### (TL;DR attached the the bottom)
-### *this repository was private at all of the development process but now public since i'm done with this project
+### *this repository was private for all of the development process but now it's public since i'm done with this project
 This project shows how to take a "local" nodejs-reactjs application and dockerize it. After docker images were made, I tested them locally with docker-compose. The next step was to create a jenkins pipeline that would compile the images and push them to ECR (Amazon Elastic Container Registry). When that was done, the final step was to create some kubernetes templates and launch it with EKS (Elastic Kubernetes Service), later I had it maintained automatically as a jenkins step. In summary this project demonstrates the basics of a CI pipeline and kubernetes.  
 
 
