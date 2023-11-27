@@ -1,0 +1,49 @@
+pipeline {
+    agent any
+    triggers {
+        githubPush()
+    }
+    environment {
+        registry = "meister7/dp1001"
+        registryCredential = credentials("dockerhub_meister7_creds")
+        dockerfilePath = "./deployment/Dockerfile"
+        buildnumber = "$BUILD_NUMBER"
+    }
+    stages {
+        stage('test1') {
+            steps {
+                echo "$registry:$buildnumber"
+                echo env.WORKSPACE
+                echo env.WORKSPACE_TMP
+                echo env.JENKINS_HOME
+            }
+        }
+        stage('Build docker image') {
+            steps {
+                script {
+                    // Build the Docker image using the specified Dockerfile
+                    sh "docker build -f $dockerfilePath -t $registry:$buildnumber ."
+                }
+            }
+        }
+        stage('push to DockerHub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub_meister7_creds', passwordVariable: 'dockerhub_pass', usernameVariable: 'dockerhub_user')]) {
+                    // Log in to Docker Hub (assuming you have a Docker Hub credential set)
+                     sh "docker login -u \"$dockerhub_user\" -p \"$dockerhub_pass\""
+                    }
+                    // Tag the image with the desired repository name
+                    sh "docker tag $registry:$buildnumber $registry:$buildnumber"
+
+                    // Push the Docker image to Docker Hub
+                    sh "docker push $registry:$buildnumber"
+            }
+        }
+        stage('Cleaning up') {
+            steps {
+                // Optionally, you can clean up local Docker images
+                sh "docker rmi $registry:$buildnumber"
+            }
+        }
+    }
+}

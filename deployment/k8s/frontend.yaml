@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: roseflix-frontend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: roseflix-frontend
+  template:
+    metadata:
+      labels:
+        app: roseflix-frontend
+    spec:
+      containers:
+      - name: roseflix-frontend-cont
+        image: public.ecr.aws/z2m4y8s8/dp1001:roseflix-frontend-dev
+        ports:
+        - containerPort: 80
+        env:
+        - name: REACT_APP_SERVER_URL
+          value: "BACKEND_API_ADDRESS_PLACEHOLDER"
+        - name: REACT_APP_API_KEY  # Set the environment variable using the secret
+          valueFrom:
+            secretKeyRef:
+              name: frontend-moviedb-key
+              key: MOVIEDB_KEY
+        resources:
+          limits:
+            memory: 800Mi
+            cpu: 680m
+      nodeSelector:
+        node-type: t2small
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: roseflix-frontend-service
+spec:
+  selector:
+    app: roseflix-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: LoadBalancer

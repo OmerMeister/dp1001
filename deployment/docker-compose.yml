@@ -1,0 +1,47 @@
+version: "3"
+services:
+  roseflix-mongodb-cont:
+    build:
+      context: ./roseflix-mongodb
+      dockerfile: Dockerfile
+    image: roseflix-mongodb-img
+    container_name: roseflix-mongodb-cont
+    hostname: roseflix-mongodb
+    ports:
+      - "27017:27017"
+    networks:
+      - project-network1
+    restart: always
+
+  roseflix-backend-cont:
+    build:
+      context: ./roseflix-backend
+      dockerfile: Dockerfile
+    image: roseflix-backend-img
+    container_name: roseflix-backend-cont
+    ports:
+      - "8080:8080"
+    networks:
+      - project-network1
+    restart: always
+    depends_on:
+      - mongodb-cont
+
+  roseflix-frontend-cont:
+    build:
+      context: ./roseflix-frontend
+      dockerfile: Dockerfile
+    image: roseflix-frontend-img
+    container_name: roseflix-frontend-cont
+    ports:
+      - "80:80"
+    networks:
+      - project-network1
+    restart: always
+    depends_on:
+      - mongodb-cont
+      - roseflix-backend-cont
+
+networks:
+  project-network1:
+    driver: bridge

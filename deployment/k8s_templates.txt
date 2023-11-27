@@ -1,0 +1,4 @@
+secrets.yaml
+mongodb.yaml
+backend.yaml
+frontend.yaml

@@ -1,0 +1,84 @@
+pipeline {
+    agent any
+    triggers {
+        githubPush()
+    }
+    environment {
+        buildnumber = "$BUILD_NUMBER"
+        update_eks = 'no'
+    }
+    parameters {
+        string(name: 'imagesArray', defaultValue: '', description: 'array of images names')
+    }
+
+    stages {
+        stage('build images list') {
+            steps {
+                script {
+                    // Path to the images.txt file
+                    def filePath = "deployment/images.txt"
+
+                    // Read the contents of the file
+                    def fileContent = readFile(file: filePath).trim()
+
+                    // Split the file content into an array using newline as separator
+                    imagesArray = fileContent.split('\n')
+
+                    // Print the array
+                    echo "following images will be created and pushed: ${imagesArray}"
+                }
+            }
+        }
+
+        stage('Build and push images') {
+            when {
+                expression { imagesArray.any() } // Skip if imagesArray is empty
+            }
+            steps {
+                script {
+                    // Loop through the images folders and build/push Docker images
+                    for (def image in imagesArray) {
+                        echo "Building and pushing ${image}..."
+                        dir(image) {
+                            // Build the Docker image using the specified Dockerfile
+                            sh "docker build -f Dockerfile -t ${image} ."
+
+                            // Login to ECR
+                            sh "aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/z2m4y8s8"
+
+                            // Tag the image with the desired repository name
+                            sh "docker tag ${image} public.ecr.aws/z2m4y8s8/dp1001:${image}-prod"
+
+                            // Push the Docker image to ECR
+                            sh "docker push public.ecr.aws/z2m4y8s8/dp1001:${image}-prod"
+
+                            // Clean image cache
+                            sh "docker system prune -af"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Cleaning up docker temporary files') {
+            steps {
+                sh "docker system prune -f"
+                echo "Docker disk space is now:"
+                sh "docker system df"
+            }
+        }
+
+        stage('update eks cluster') {
+            steps {
+                // Trigger another pipeline by name
+                build job: "dp1001-update_k8s", parameters: [string(name: "CALLED_BY_OTHER", value: "${JOB_NAME}")]
+            }
+        }
+    }
+    post {
+        always {
+            echo '--delete all workspace files--'
+            cleanWs()
+        }
+    }
+}

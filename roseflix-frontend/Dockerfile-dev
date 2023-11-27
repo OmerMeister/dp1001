@@ -1,0 +1,27 @@
+# Use an official base image as a starting point
+FROM node:15-alpine3.13
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# copy dependencies files
+COPY package.json /app
+COPY package-lock.json /app
+
+# install dependencies
+RUN npm install
+
+# copy rest of the app
+COPY . /app
+
+# key for TMDB
+ENV REACT_APP_API_KEY="saved as secret in k8s, its the apy key for moviedb"
+# address of the backend server (change address for non local prod builds)
+ENV REACT_APP_SERVER_URL=http://host.docker.internal:8080
+# set the port for accessing the app (env var of nodejs)
+ENV PORT=80
+
+# expose ports
+EXPOSE 80
+# run project
+CMD npm start

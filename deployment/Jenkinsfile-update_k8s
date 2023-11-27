@@ -1,0 +1,84 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'CALLED_BY_OTHER', defaultValue: 'no', description: 'indicate if the pipeline was called by other pipeline')
+        string(name: 'templatesArray', defaultValue: '', description: 'array of k8s templates to apply')
+    }
+
+    stages {
+        stage('build k8s_templates list') {
+            steps {
+                script {
+                    // Path to the k8s_templates.txt file
+                    def filePath = "deployment/k8s_templates.txt"
+
+                    // Read the contents of the file
+                    def fileContent = readFile(file: filePath).trim()
+
+                    // Split the file content into an array using newline as separator
+                    templatesArray = fileContent.split('\n')
+
+                    // Print the array
+                    echo "following k8s_templates will be created and pushed: ${templatesArray}"
+                }
+            }
+        }
+        stage('Update EKS') {
+            steps {
+                script {
+                    // Conditionally execute steps based on the value of CALLED_BY_OTHER
+                    if (params.CALLED_BY_OTHER == 'no') {
+                        echo "k8s update was triggered by self action"
+                    } 
+                    else {
+                        echo "k8s update was triggered by pipeline: ${params.CALLED_BY_OTHER}"    
+                    }
+
+                    //configure the correct cluster
+                    sh "aws eks update-kubeconfig --name dp1001 --region us-east-1"
+
+                    dir('deployment/k8s') {
+                        for (def template in templatesArray) {
+                        echo "applying template ${template}"
+                            if (template == 'frontend.yaml') {
+                                // wait for the load balancer of the backend service to be ready.
+                                sh "sleep 5"
+                                // define the placehoder we look for
+                                def original_string = "BACKEND_API_ADDRESS_PLACEHOLDER"
+                                // getting the content for the replacement string. the content is the url of the load balancer service of the backend
+                                def replace_string = sh(script: 'kubectl get services | awk \'/roseflix-backend-service/ { print $4 }\'', returnStdout: true).trim()
+                                // Check if replace_string contains spaces, if it does it means we got an error since any error in string fetch will lead to spaces.
+                                if (replace_string.contains(' ')) {
+                                    error "Error: replace_string contains spaces. aborting aplly of frontend.yaml"
+                                }
+                                else {
+                                    // Modify the replace_string
+                                    replace_string = "http://${replace_string}:8080"
+                                    // Use sed to replace the string
+                                    sh "sed -i 's#${original_string}#${replace_string}#g' ${template}"
+                                    echo "String replaced successfully."
+                                }
+                            }
+                            if (template == 'secrets.yaml') {
+                                // Use the MOVIEDB_API_KEY_64ENCODED credential
+                                withCredentials([string(credentialsId: 'MOVIEDB_API_KEY_64ENCODED', variable: 'replace_string')]) {
+                                def original_string = "MOVIEDB_API_KEY_64ENCODED_PLACEHOLDER"
+                                // replace the placeholder string in the secret defention with the real one which is stored on jenkins
+                                sh "sed -i 's#${original_string}#${replace_string}#g' ${template}"
+                                }
+                            }
+                        sh "kubectl apply -f ${template}"
+                        }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            echo '--delete all workspace files--'
+            cleanWs()
+        }
+    }
+}
