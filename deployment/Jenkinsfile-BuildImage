@@ -44,13 +44,13 @@ pipeline {
                             sh "docker build -f Dockerfile -t ${image} ."
 
                             // Tag the image with the desired repository name
-                            sh "docker tag ${image} public.ecr.aws/z2m4y8s8/dp1001:${image}-prod"
+                            sh "docker tag ${image} 671231939531.dkr.ecr.us-east-1.amazonaws.com/dp1001:${image}-prod"
 
                             // Login to ECR
                             sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 671231939531.dkr.ecr.us-east-1.amazonaws.com"
 
                             // Push the Docker image to ECR
-                            sh "docker push public.ecr.aws/z2m4y8s8/dp1001:${image}-prod"
+                            sh "docker push 671231939531.dkr.ecr.us-east-1.amazonaws.com/dp1001:${image}-prod"
 
                             // Clean image cache
                             sh "docker system prune -af"
