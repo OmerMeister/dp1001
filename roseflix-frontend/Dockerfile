@@ -10,9 +10,9 @@ RUN npm install
 COPY . .
 # setting env vars here since after "build" the env vars are being sealed into the files
 # key for TMDB
-ENV REACT_APP_API_KEY="some moviedb api key"
+ENV REACT_APP_API_KEY=c54288e78c296c2a44762eb054c9e88e
 # address of the backend server
-ENV REACT_APP_SERVER_URL=http://roseflix-backend-service:8080
+ENV REACT_APP_SERVER_URL=http://dp1001backend.meister.lol:8080
 # build production ready folder (named "build")
 RUN npm run build
 
