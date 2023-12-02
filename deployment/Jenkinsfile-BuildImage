@@ -44,7 +44,7 @@ pipeline {
                             sh "docker build -f Dockerfile -t ${image} ."
 
                             // Login to ECR
-                            sh "aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/z2m4y8s8"
+                            sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 671231939531.dkr.ecr.us-east-1.amazonaws.com"
 
                             // Tag the image with the desired repository name
                             sh "docker tag ${image} public.ecr.aws/z2m4y8s8/dp1001:${image}-prod"
