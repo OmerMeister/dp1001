@@ -64,6 +64,7 @@ pipeline {
                 script {
                     dir('deployment') {
                         sh 'sleep 7'
+                        sh 'chmod 700 update_backend_api_url.sh'
                         sh './update_backend_api_url.sh'
                     }
                 }
