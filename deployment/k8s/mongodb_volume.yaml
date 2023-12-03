@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: mongodb
-        image: https://public.ecr.aws/z2m4y8s8/dp1001:roseflix-mongodb-prod
+        image: 671231939531.dkr.ecr.us-east-1.amazonaws.com/dp1001:roseflix-mongodb-prod
         ports:
         - containerPort: 27017
         volumeMounts:

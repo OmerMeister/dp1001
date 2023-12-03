@@ -14,23 +14,21 @@ spec:
     spec:
       containers:
       - name: roseflix-frontend-cont
-        image: public.ecr.aws/z2m4y8s8/dp1001:roseflix-frontend-dev
+        image: 671231939531.dkr.ecr.us-east-1.amazonaws.com/dp1001:roseflix-frontend-prod
         ports:
         - containerPort: 80
         env:
-        - name: REACT_APP_SERVER_URL
-          value: "BACKEND_API_ADDRESS_PLACEHOLDER"
-        - name: REACT_APP_API_KEY  # Set the environment variable using the secret
+        - name: REACT_APP_API_KEY  # not relevant anymore but you can still see the env var get applied on the linux container
           valueFrom:
             secretKeyRef:
               name: frontend-moviedb-key
               key: MOVIEDB_KEY
         resources:
           limits:
-            memory: 800Mi
-            cpu: 680m
-      nodeSelector:
-        node-type: t2small
+            memory: 530Mi
+            cpu: 780m
+      #nodeSelector:
+        #node-type: t2small
 ---
 apiVersion: v1
 kind: Service

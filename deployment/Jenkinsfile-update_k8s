@@ -38,28 +38,13 @@ pipeline {
                     //configure the correct cluster
                     sh "aws eks update-kubeconfig --name dp1001 --region us-east-1"
 
+                    // Login to ECR
+                    sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 671231939531.dkr.ecr.us-east-1.amazonaws.com"
+
                     dir('deployment/k8s') {
                         for (def template in templatesArray) {
                         echo "applying template ${template}"
-                            if (template == 'frontend.yaml') {
-                                // wait for the load balancer of the backend service to be ready.
-                                sh "sleep 5"
-                                // define the placehoder we look for
-                                def original_string = "BACKEND_API_ADDRESS_PLACEHOLDER"
-                                // getting the content for the replacement string. the content is the url of the load balancer service of the backend
-                                def replace_string = sh(script: 'kubectl get services | awk \'/roseflix-backend-service/ { print $4 }\'', returnStdout: true).trim()
-                                // Check if replace_string contains spaces, if it does it means we got an error since any error in string fetch will lead to spaces.
-                                if (replace_string.contains(' ')) {
-                                    error "Error: replace_string contains spaces. aborting aplly of frontend.yaml"
-                                }
-                                else {
-                                    // Modify the replace_string
-                                    replace_string = "http://${replace_string}:8080"
-                                    // Use sed to replace the string
-                                    sh "sed -i 's#${original_string}#${replace_string}#g' ${template}"
-                                    echo "String replaced successfully."
-                                }
-                            }
+                            // update secrets from jenkins' credentials manager
                             if (template == 'secrets.yaml') {
                                 // Use the MOVIEDB_API_KEY_64ENCODED credential
                                 withCredentials([string(credentialsId: 'MOVIEDB_API_KEY_64ENCODED', variable: 'replace_string')]) {
@@ -70,6 +55,16 @@ pipeline {
                             }
                         sh "kubectl apply -f ${template}"
                         }
+                    }
+                }
+            }
+        }
+        stage('update backend+frontend dns records') {
+            steps {
+                script {
+                    dir('deployment') {
+                        sh 'sleep 7'
+                        sh './update_backend_api_url.sh'
                     }
                 }
             }

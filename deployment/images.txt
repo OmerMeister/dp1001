@@ -1,3 +1,0 @@
-roseflix-mongodb
-roseflix-backend
-roseflix-frontend
