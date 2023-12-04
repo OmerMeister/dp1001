@@ -4,7 +4,7 @@
 ### *this repository was private for all of the development process but now it's public since i'm done with this project
 This project shows how to take a "local" node-reactjs application and dockerize it. After docker images were made, I tested them locally with docker-compose. The next step was to create a jenkins pipeline that would compile the images and push them to ECR (Amazon Elastic Container Registry). When that was done, the final step was to create some kubernetes deployments and launch them with EKS (Elastic Kubernetes Service) and also deploy it in jenkins.
 
-![Pipeline](https://s3.amazonaws.com/meister.public.resources/dp1001-pipeline.png)
+![Pipeline](https://s3.amazonaws.com/meister.public.resources/dp1001/Pipeline.png)
 
 
 ## Project components
@@ -43,19 +43,18 @@ The first pipeline (source file "Jenkinsfile-BuildImage") is triggered by a push
 The second pipeline (source file "Jenkinsfile-update_k8s") first executes "kubectl apply -f" for any deployment which its name is on "k8s_templates.txt". The pipeline also indicated if it was automatically triggered by "BuildImage" pipeline or by itself. Then the pipeline launches a bash script which query kubectl for the load-balancers' url of the backend api (dp1001backend.meister.lol) and the frontend url (roseflix.meister.lol), and update the route53 dns records accordingly. at last the pipeline clears the workspace.
 The pipeline also deals with two problems i had due to the nature of the project, more on that in the "compensations" section.
 
+![update k8s pipeline](https://s3.amazonaws.com/meister.public.resources/dp1001/updatek8s-pipeline.jpg)  
+update k8s pipeline
+
 ### ECR
 ECR (Amazon Elastic Container Registry) was chosen because i was already familiar with Dockerhub and wanted to try another artifacts platform. I used a private ECR, so env vars of the images are safe.
-[available here.](https://gallery.ecr.aws/z2m4y8s8/dp1001)
+
+![Private ECR images](https://s3.amazonaws.com/meister.public.resources/dp1001/images.png)
 
 ### EKS
 Setting up the cluster for the first time was relatively demanding since it required manual creation of IAM roles and VPC settings. Especially the process of granting cluster management to another IAM user in the account (edit the "aws-auth" config-map in vi editor from the cloudshell console). The next times went relatively fast. Furtunately for me, i was able to run the cluster with only 3 free-tier t2.micro instances in the node group.
 
-![jenkins_build_image](https://s3.amazonaws.com/meister.public.resources/dp1001/jenkins_build_image.png)
-(build image and push was skipped since the images file was empty on this run, later on, a clean workspace stage was added)
-
-![jenkins_secrets_list](https://s3.amazonaws.com/meister.public.resources/dp1001/jenkins_secrets.png)
-first secret is for github, second is for dockerhub (not in use), third is the the api key to put in the k8s template.
-
+![EKS kubectl statistics](https://s3.amazonaws.com/meister.public.resources/dp1001/eks.jpg)
 
 ## Compensations
 
