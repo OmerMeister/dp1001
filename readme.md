@@ -17,7 +17,7 @@ Eventually i went with "[Roseflix](https://github.com/rbilag/roseflix)" project 
 ### Containerization
 The original project is spreaded across two repositories. One for frontend, one for backend, and it also has an instruction to use a momgodb atlas, so I already assumed it will take 3 containers for the whole project without out-sourcing the db part.  
 
-**mongodb container -** Just grabbed one of the latest mongodb images, created admin credentials as env vars and left it with the original port of 27017. I also tested the project with a cloud db on "mongodb atlas". Works great, just change the connection string and it will work.  
+**mongodb container -** Just grabbed one of the latest mongodb images, created admin credentials as env vars and used the defualt port of 27017. I also tested the project with a cloud db on "mongodb atlas". Just change the connection string and it will work. Because the cluster get frequently deleted, i didn't mind that my stateful mongodb isn't using a persistant volume. Anyhow, there is mongo atlas which is faster and more scalable for stateful data.
 
 **backend container -** I went with node 15.13 alpine (project originally written for node14) to avoid compatability issued which i won't know how to solve.  
 Rest of the work was just moving the env vars from a "config.env" file to the Dockerfile, changed the "npm run" attribute from "dev" to "prod".
